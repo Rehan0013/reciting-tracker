@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import ProfileForm from '@/components/profile/ProfileForm';
 import ReadingTypeManager from '@/components/profile/ReadingTypeManager';
-import { User as UserIcon, Bell, Download, Trash2, ShieldAlert, Loader } from 'lucide-react';
+import { User as UserIcon, Bell, Download, Trash2, ShieldAlert, Loader, LogOut } from 'lucide-react';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -156,18 +156,27 @@ export default function ProfilePage() {
     <div className="w-full max-w-[600px] mx-auto space-y-4 pb-12 animate-fade-in">
       
       {/* 1. Header Profile details Card */}
-      <div className="flex items-center gap-4 border border-border bg-card p-4 rounded-card select-none">
-        <div className="w-16 h-16 border-2 border-primary bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg rounded-full">
-          {getInitials()}
+      <div className="flex items-center justify-between border border-border bg-card p-4 rounded-card select-none gap-4">
+        <div className="flex items-center gap-4 min-w-0 flex-1">
+          <div className="w-16 h-16 border-2 border-primary bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg rounded-full shrink-0">
+            {getInitials()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-serif font-bold text-xl text-foreground capitalize truncate leading-none">
+              {user?.name || 'User'}
+            </h2>
+            <p className="text-xs text-muted-foreground truncate mt-1.5 leading-none">
+              {user?.email}
+            </p>
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <h2 className="font-serif font-bold text-xl text-foreground capitalize truncate leading-none">
-            {user?.name || 'User'}
-          </h2>
-          <p className="text-xs text-muted-foreground truncate mt-1.5 leading-none">
-            {user?.email}
-          </p>
-        </div>
+        <button
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          className="px-3 py-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold rounded-btn transition-colors duration-100 cursor-pointer focus:outline-none min-h-[44px] flex items-center justify-center gap-1.5 shrink-0"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span>sign out</span>
+        </button>
       </div>
 
       {/* 2. Account Information Form */}

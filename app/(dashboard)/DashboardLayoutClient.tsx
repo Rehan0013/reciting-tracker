@@ -274,8 +274,16 @@ export default function DashboardLayoutClient({
           <h1 className="font-serif text-lg font-bold text-foreground">
             {getPageTitle()}
           </h1>
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
             <ThemeToggle />
+            <button
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="w-9 h-9 border border-border bg-background hover:bg-secondary text-red-600 flex items-center justify-center rounded-[2px] cursor-pointer focus:outline-none"
+              title="Sign Out"
+              aria-label="Sign Out"
+            >
+              <LogOut className="w-4 h-4 shrink-0" />
+            </button>
           </div>
         </header>
 
