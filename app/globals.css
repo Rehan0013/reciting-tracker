@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), sans-serif;
+  --font-serif: var(--font-amiri), serif;
+  --font-arabic: var(--font-noto-naskh), serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-holiday: var(--holiday);
+  
+  --radius-card: 4px;
+  --radius-btn: 2px;
+}
+
+:root {
+  --background: #fdfbf7;
+  --foreground: #2a2b25;
+  --card: #f8f5ed;
+  --card-foreground: #2a2b25;
+  --border: #dcd7ca;
+  
+  --primary: #1d4e3a;
+  --primary-foreground: #fdfbf7;
+  
+  --secondary: #f0ebd8;
+  --secondary-foreground: #2a2b25;
+  
+  --muted: #8d887a;
+  --muted-foreground: #5d584a;
+  
+  --accent: #b39359;
+  --accent-foreground: #fdfbf7;
+  
+  --holiday: #c87a1e;
+}
+
+.dark {
+  --background: #0f1210;
+  --foreground: #f4f3ef;
+  --card: #161a18;
+  --card-foreground: #f4f3ef;
+  --border: #232925;
+  
+  --primary: #286e52;
+  --primary-foreground: #0f1210;
+  
+  --secondary: #1a201c;
+  --secondary-foreground: #f4f3ef;
+  
+  --muted: #55615a;
+  --muted-foreground: #a2b0a8;
+  
+  --accent: #cba153;
+  --accent-foreground: #0f1210;
+  
+  --holiday: #e69138;
+}
+
+/* Base resets & typography rules */
+html, body {
+  min-height: 100%;
+  font-family: var(--font-sans);
+  font-size: 16px; /* 16px base on mobile/all to prevent iOS zoom */
+}
+
+/* Enforce flat architecture */
+*, *::before, *::after {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Input zoom prevention & tap target standard */
+input, select, textarea, button {
+  font-size: 16px !important; /* Prevents auto zoom in iOS Safari */
+}
+
+/* Utility for notch support on bottom bar */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Islamic Geometric Background Pattern */
+.islamic-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M30 0l30 30-30 30L0 30zM30 10L10 30l20 20 20-20z' fill='%231d4e3a' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+.dark .islamic-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M30 0l30 30-30 30L0 30zM30 10L10 30l20 20 20-20z' fill='%23286e52' fill-opacity='1' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+/* Subtle fade-in transition on page load only */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
