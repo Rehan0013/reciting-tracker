@@ -129,7 +129,7 @@ export default function RegisterForm() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Raza Ahmad"
+                placeholder="Enter Name"
                 className="w-full pl-10 pr-3 py-2.5 bg-background border border-border rounded-[2px] text-foreground focus:outline-none focus:border-primary text-base min-h-[44px]"
               />
             </div>
