@@ -37,18 +37,22 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Helper: Get local YYYY-MM-DD date string
-  const getLocalTodayStr = () => {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  // Helper: Get Indian Standard Time (Asia/Kolkata) or local YYYY-MM-DD date string
+  const getTodayStr = () => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    } catch {
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
   };
 
-  const todayStr = getLocalTodayStr();
+  const todayStr = getTodayStr();
 
-  // Load calendar and stats summary
+  // Load calendar and stats summary + Hourly auto-refresh
   useEffect(() => {
     const fetchHistoryData = async () => {
       setLoading(true);
@@ -62,7 +66,7 @@ export default function HistoryPage() {
           const month = gregDate.getMonth() + 1;
           url += `&year=${year}&month=${month}`;
 
-          // Also fetch calendar dates from Aladhan API proxy for heatmap formatting
+          // Also fetch calendar dates from Islamic date proxy for heatmap formatting
           const calRes = await fetch(`/api/islamic-date?month=${month}&year=${year}`);
           if (calRes.ok) {
             const calJson = await calRes.json();
@@ -86,6 +90,24 @@ export default function HistoryPage() {
     };
 
     fetchHistoryData();
+
+    // Check hourly (3600000 ms)
+    const hourlyInterval = setInterval(() => {
+      fetchHistoryData();
+    }, 3600000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchHistoryData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(hourlyInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [mode, gregDate, hijriMonth, hijriYear, todayStr]);
 
   // Gregorian Navigation Handlers

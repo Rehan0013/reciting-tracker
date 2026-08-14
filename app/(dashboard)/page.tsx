@@ -22,18 +22,22 @@ export default function CalendarPage() {
   const [showMonthEndBanner, setShowMonthEndBanner] = useState(false);
   const [prevMonthSummary, setPrevMonthSummary] = useState<{ surahs: number; days: number } | null>(null);
 
-  // Helper: Get local YYYY-MM-DD date string
-  const getLocalTodayStr = () => {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  // Helper: Get Indian Standard Time (Asia/Kolkata) or local YYYY-MM-DD date string
+  const getTodayStr = () => {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    } catch {
+      const d = new Date();
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
   };
 
-  const todayStr = getLocalTodayStr();
+  const todayStr = getTodayStr();
 
-  // Load calendar and summary data
+  // Load calendar and summary data + Hourly auto-update check
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -41,7 +45,7 @@ export default function CalendarPage() {
       const month = currentDate.getMonth() + 1; // API expects 1-12
 
       try {
-        // 1. Fetch calendar data from Aladhan API proxy
+        // 1. Fetch calendar data from Islamic date proxy (calibrated to Indian moon sighting)
         const calRes = await fetch(`/api/islamic-date?month=${month}&year=${year}`);
         if (!calRes.ok) throw new Error('Failed to fetch calendar');
         const calJson = await calRes.json();
@@ -70,6 +74,25 @@ export default function CalendarPage() {
     };
 
     fetchData();
+
+    // Check and update each hour (3600000 ms)
+    const hourlyInterval = setInterval(() => {
+      fetchData();
+    }, 3600000);
+
+    // Refresh when user switches back to the tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(hourlyInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [currentDate, todayStr]);
 
   // Check and fetch previous month details for Month-End Achievement Banner

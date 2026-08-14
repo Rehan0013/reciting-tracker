@@ -94,6 +94,24 @@ export default function DayDetailPage() {
     if (dateStr) {
       loadData();
     }
+
+    // Refresh hourly (3600000 ms) to keep Hijri data & logs up to date
+    const hourlyInterval = setInterval(() => {
+      if (dateStr) loadData();
+    }, 3600000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && dateStr) {
+        loadData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(hourlyInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateStr]);
 
