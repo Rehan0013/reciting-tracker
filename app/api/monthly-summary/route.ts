@@ -69,7 +69,7 @@ export async function GET(request: Request) {
       ]),
 
       // 3. Detailed logs list for calendar grid rendering
-      ReadingLog.find(matchQuery).select('date isDayComplete entries'),
+      ReadingLog.find(matchQuery).select('date isDayComplete entries hijriDay hijriMonth hijriYear'),
     ]);
 
     const stats = statsResult[0] || { daysLogged: 0, totalEntries: 0, completeDays: 0 };

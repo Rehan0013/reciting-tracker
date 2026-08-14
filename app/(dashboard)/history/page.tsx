@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import MonthSummaryCard from '@/components/summary/MonthSummaryCard';
 import ReadingBreakdown from '@/components/summary/ReadingBreakdown';
 import ConsistencyHeatmap from '@/components/summary/ConsistencyHeatmap';
-import { ChevronLeft, ChevronRight, BarChart2, Calendar, Award, Loader } from 'lucide-react';
+import { ChevronLeft, ChevronRight, BarChart2, Calendar, Award, Loader, RotateCcw } from 'lucide-react';
 
 const HIJRI_MONTHS = [
   'Muharram',
@@ -17,7 +17,7 @@ const HIJRI_MONTHS = [
   "Sha'ban",
   'Ramadan',
   'Shawwal',
-  'Dhu al-Qi\'dah',
+  "Dhu al-Qi'dah",
   'Dhu al-Hijjah',
 ];
 
@@ -27,9 +27,10 @@ export default function HistoryPage() {
   // Gregorian navigation states
   const [gregDate, setGregDate] = useState(() => new Date());
 
-  // Islamic navigation states
-  const [hijriMonth, setHijriMonth] = useState(12); // Default to Dhu al-Hijjah
-  const [hijriYear, setHijriYear] = useState(1446); // Default to 1446
+  // Islamic navigation states - dynamically initialized from current Indian Hijri date
+  const [hijriMonth, setHijriMonth] = useState<number>(2); // Default fallback: Safar
+  const [hijriYear, setHijriYear] = useState<number>(1448); // Default fallback: 1448 AH
+  const [currentHijriInfo, setCurrentHijriInfo] = useState<{ month: number; year: number; day: number } | null>(null);
 
   // Fetch states
   const [daysData, setDaysData] = useState<any[]>([]);
@@ -52,7 +53,31 @@ export default function HistoryPage() {
 
   const todayStr = getTodayStr();
 
-  // Load calendar and stats summary + Hourly auto-refresh
+  // 1. Fetch current live Indian Hijri date on mount to initialize Islamic Month & Year accurately
+  useEffect(() => {
+    const fetchCurrentHijri = async () => {
+      try {
+        const res = await fetch('/api/islamic-date?today=true');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.today?.hijri) {
+            const m = Number(json.today.hijri.month);
+            const y = Number(json.today.hijri.year);
+            const d = Number(json.today.hijri.day);
+            setCurrentHijriInfo({ month: m, year: y, day: d });
+            setHijriMonth(m);
+            setHijriYear(y);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching today Hijri info for history page:', err);
+      }
+    };
+
+    fetchCurrentHijri();
+  }, []);
+
+  // 2. Load calendar and stats summary + Hourly auto-refresh
   useEffect(() => {
     const fetchHistoryData = async () => {
       setLoading(true);
@@ -71,6 +96,16 @@ export default function HistoryPage() {
           if (calRes.ok) {
             const calJson = await calRes.json();
             setDaysData(calJson.data || []);
+
+            // If currentHijriInfo is not set yet, set it from calJson.indianToday
+            if (!currentHijriInfo && calJson.indianToday?.hijri) {
+              const m = Number(calJson.indianToday.hijri.month);
+              const y = Number(calJson.indianToday.hijri.year);
+              const d = Number(calJson.indianToday.hijri.day);
+              setCurrentHijriInfo({ month: m, year: y, day: d });
+              setHijriMonth(m);
+              setHijriYear(y);
+            }
           }
         } else {
           url += `&hijriYear=${hijriYear}&hijriMonth=${hijriMonth}`;
@@ -119,6 +154,10 @@ export default function HistoryPage() {
     setGregDate(new Date(gregDate.getFullYear(), gregDate.getMonth() + 1, 1));
   };
 
+  const handleResetGregToday = () => {
+    setGregDate(new Date());
+  };
+
   // Islamic Navigation Handlers
   const handlePrevHijriMonth = () => {
     if (hijriMonth === 1) {
@@ -137,6 +176,26 @@ export default function HistoryPage() {
       setHijriMonth(prev => prev + 1);
     }
   };
+
+  const handleResetHijriToday = () => {
+    if (currentHijriInfo) {
+      setHijriMonth(currentHijriInfo.month);
+      setHijriYear(currentHijriInfo.year);
+    } else {
+      setHijriMonth(2);
+      setHijriYear(1448);
+    }
+  };
+
+  // Check if viewing current month
+  const isViewingCurrentGregMonth =
+    gregDate.getFullYear() === new Date().getFullYear() &&
+    gregDate.getMonth() === new Date().getMonth();
+
+  const isViewingCurrentHijriMonth =
+    currentHijriInfo !== null &&
+    hijriMonth === currentHijriInfo.month &&
+    hijriYear === currentHijriInfo.year;
 
   // Extract pages read from breakdown
   const getPagesCount = () => {
@@ -177,8 +236,6 @@ export default function HistoryPage() {
     const map: Record<string, number> = {};
     if (summary?.monthLogs) {
       summary.monthLogs.forEach((log: any) => {
-        const dummyKey = `hijri-day-${log.date}`;
-        // Since we are showing 1-30 boxes, we map day number directly
         if (log.hijriDay) {
           map[log.hijriDay.toString()] = log.entries ? log.entries.length : 0;
         }
@@ -232,15 +289,37 @@ export default function HistoryPage() {
           <ChevronLeft className="w-5 h-5 text-foreground" />
         </button>
 
-        <div className="text-center">
+        <div className="text-center flex flex-col items-center">
           <h3 className="font-serif font-bold text-lg text-foreground capitalize leading-none">
             {mode === 'gregorian'
               ? gregDate.toLocaleString('en-US', { month: 'long', year: 'numeric' }).toLowerCase()
-              : `${HIJRI_MONTHS[hijriMonth - 1].toLowerCase()} ${hijriYear} ah`}
+              : `${HIJRI_MONTHS[hijriMonth - 1]?.toLowerCase() || 'month'} ${hijriYear} ah`}
           </h3>
-          <p className="text-[10px] text-muted-foreground mt-1 capitalize leading-none">
-            {mode === 'gregorian' ? 'gregorian calendar view' : 'islamic calendar view'}
-          </p>
+          
+          <div className="flex items-center gap-2 mt-1">
+            <p className="text-[10px] text-muted-foreground capitalize leading-none">
+              {mode === 'gregorian' ? 'gregorian calendar view' : 'islamic calendar view'}
+            </p>
+            {/* Quick jump to current month button if navigated away */}
+            {mode === 'gregorian' && !isViewingCurrentGregMonth && (
+              <button
+                onClick={handleResetGregToday}
+                className="text-[10px] font-semibold text-primary hover:underline flex items-center gap-1 leading-none cursor-pointer"
+              >
+                <RotateCcw className="w-2.5 h-2.5" />
+                this month
+              </button>
+            )}
+            {mode === 'islamic' && !isViewingCurrentHijriMonth && (
+              <button
+                onClick={handleResetHijriToday}
+                className="text-[10px] font-semibold text-primary hover:underline flex items-center gap-1 leading-none cursor-pointer"
+              >
+                <RotateCcw className="w-2.5 h-2.5" />
+                current hijri month
+              </button>
+            )}
+          </div>
         </div>
 
         <button
@@ -330,8 +409,15 @@ export default function HistoryPage() {
           ) : (
             /* Custom Hijri Heatmap (Days 1 to 30) */
             <div className="w-full bg-card border border-border p-4 rounded-card select-none">
-              <div className="text-xs font-semibold text-muted-foreground mb-3 capitalize">
-                hijri monthly consistency
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-xs font-semibold text-muted-foreground capitalize">
+                  hijri monthly consistency ({HIJRI_MONTHS[hijriMonth - 1]} {hijriYear} AH)
+                </div>
+                {isViewingCurrentHijriMonth && currentHijriInfo && (
+                  <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    today is day {currentHijriInfo.day}
+                  </span>
+                )}
               </div>
               <div className="flex flex-col items-center">
                 <div className="grid grid-cols-7 gap-1.5 w-full max-w-[280px]">
@@ -339,6 +425,8 @@ export default function HistoryPage() {
                   {Array.from({ length: 30 }).map((_, idx) => {
                     const hijriDayNum = idx + 1;
                     const count = getHijriHeatmapLogsMap()[hijriDayNum.toString()] || 0;
+                    const isToday =
+                      isViewingCurrentHijriMonth && currentHijriInfo?.day === hijriDayNum;
                     
                     let shadingClass = 'bg-secondary border-border/40 text-muted-foreground/60';
                     if (count > 0) {
@@ -353,8 +441,14 @@ export default function HistoryPage() {
                     return (
                       <div
                         key={idx}
-                        className={`aspect-square border flex items-center justify-center text-[8px] font-bold rounded-[1px] w-full transition-colors duration-100 ${shadingClass}`}
-                        title={`${count} entries on Hijri day ${hijriDayNum}`}
+                        className={`aspect-square border flex items-center justify-center text-[9px] font-bold rounded-[2px] w-full transition-all duration-100 ${shadingClass} ${
+                          isToday
+                            ? 'ring-2 ring-primary ring-offset-1 ring-offset-background font-extrabold shadow-sm'
+                            : ''
+                        }`}
+                        title={`${count} entries on ${hijriDayNum} ${HIJRI_MONTHS[hijriMonth - 1]} ${hijriYear} AH${
+                          isToday ? ' (Today)' : ''
+                        }`}
                       >
                         {hijriDayNum}
                       </div>
