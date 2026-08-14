@@ -130,19 +130,26 @@ export default function MonthNavigator({
 
       {/* Hijri Month Details Modal (Custom Popover) */}
       {showPopover && details && (
-        <div className="fixed inset-0 bg-background/80 backdrop-none flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="w-full max-w-[360px] bg-card border-2 border-border p-5 rounded-card relative">
+        <div
+          className="fixed inset-0 bg-background/80 backdrop-none flex items-center justify-center p-4 z-50 animate-fade-in overflow-y-auto"
+          onClick={() => setShowPopover(false)}
+        >
+          <div
+            className="w-full max-w-[380px] max-h-[85vh] bg-card border-2 border-border p-5 rounded-card relative flex flex-col select-text shadow-lg my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => setShowPopover(false)}
-              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground cursor-pointer"
+              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground cursor-pointer p-1"
+              aria-label="Close Islamic Calendar Span Modal"
             >
               <X className="w-5 h-5" />
             </button>
-            <h3 className="font-serif font-bold text-xl text-foreground mb-4">
+            <h3 className="font-serif font-bold text-xl text-foreground mb-4 pr-6 shrink-0">
               Islamic Calendar Span
             </h3>
             
-            <div className="space-y-3 text-sm">
+            <div className="space-y-3 text-sm overflow-y-auto pr-1 flex-1 min-h-0">
               <div>
                 <p className="text-xs text-muted-foreground">starts on</p>
                 <p className="font-medium text-foreground">{details.start}</p>
@@ -158,7 +165,7 @@ export default function MonthNavigator({
                   <ul className="space-y-1.5 mt-1">
                     {details.holidays.map((h, i) => (
                       <li key={i} className="p-2 border border-border bg-secondary text-foreground text-xs rounded-[2px]">
-                        <span className="font-semibold text-primary block">{h.holidayName.toLowerCase()}</span>
+                        <span className="font-semibold text-primary block capitalize">{h.holidayName.toLowerCase()}</span>
                         <span className="text-[10px] text-muted-foreground">
                           {h.gregDate} ({h.hijriDate})
                         </span>
@@ -175,7 +182,7 @@ export default function MonthNavigator({
 
             <button
               onClick={() => setShowPopover(false)}
-              className="w-full py-2 bg-primary text-primary-foreground font-medium rounded-btn hover:bg-opacity-95 cursor-pointer mt-5 text-sm min-h-[40px]"
+              className="w-full py-2 bg-primary text-primary-foreground font-medium rounded-btn hover:bg-opacity-95 cursor-pointer mt-4 text-sm min-h-[40px] shrink-0"
             >
               close
             </button>
