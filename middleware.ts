@@ -13,6 +13,7 @@ export const config = {
     '/day/:path*',
     '/history',
     '/profile',
+    '/quran/:path*',
     '/api/reading-log/:path*',
     '/api/monthly-summary/:path*',
     '/api/profile/:path*',
