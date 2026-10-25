@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, BookOpen, Info, Copy, Check, Volume2, Sparkles, Loader2, BookText } from 'lucide-react';
 import { TAFSIR_OPTIONS, TafsirOption } from '@/lib/quranData';
 
@@ -27,6 +28,7 @@ export default function VerseContextModal({
   translationText,
   onPlayAyah,
 }: VerseContextModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'tafsir' | 'surahContext'>('tafsir');
   const [selectedTafsirId, setSelectedTafsirId] = useState<number>(169); // Default: Ibn Kathir
   const [loading, setLoading] = useState(false);
@@ -39,6 +41,10 @@ export default function VerseContextModal({
   });
   const [copied, setCopied] = useState(false);
   const [fontSizeOffset, setFontSizeOffset] = useState<number>(0);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close on Escape key
   useEffect(() => {
@@ -111,10 +117,12 @@ export default function VerseContextModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+  if (!isOpen || !mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/65 backdrop-blur-xs animate-fade-in">
       <div
-        className="w-full max-w-3xl max-h-[90vh] bg-card border-2 border-border rounded-card flex flex-col shadow-2xl overflow-hidden"
+        className="w-full max-w-3xl max-h-[85dvh] sm:max-h-[90vh] bg-card border-2 border-border rounded-card flex flex-col shadow-2xl overflow-hidden"
         role="dialog"
         aria-modal="true"
       >
@@ -175,50 +183,52 @@ export default function VerseContextModal({
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex items-center justify-between px-4 sm:px-6 border-b border-border bg-secondary/50 shrink-0">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveTab('tafsir')}
-              className={`flex items-center gap-2 py-2.5 px-3 border-b-2 font-medium text-xs sm:text-sm cursor-pointer transition-colors ${
-                activeTab === 'tafsir'
-                  ? 'border-primary text-primary font-bold'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <BookOpen className="w-4 h-4" />
-              <span>Verse Tafsir</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('surahContext')}
-              className={`flex items-center gap-2 py-2.5 px-3 border-b-2 font-medium text-xs sm:text-sm cursor-pointer transition-colors ${
-                activeTab === 'surahContext'
-                  ? 'border-primary text-primary font-bold'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Info className="w-4 h-4" />
-              <span>Surah Revelation & Theme</span>
-            </button>
-          </div>
-
-          {/* Tafsir Selector Dropdown (when on Tafsir tab) */}
-          {activeTab === 'tafsir' && (
-            <div className="flex items-center gap-2 py-1.5">
-              <span className="hidden sm:inline text-xs text-muted-foreground">Scholar:</span>
-              <select
-                value={selectedTafsirId}
-                onChange={(e) => setSelectedTafsirId(Number(e.target.value))}
-                className="text-xs px-2 py-1 bg-card border border-border rounded-[2px] text-foreground focus:outline-primary cursor-pointer"
+        <div className="px-4 sm:px-6 border-b border-border bg-secondary/50 shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-1">
+            <div className="flex items-center gap-1.5 overflow-x-auto">
+              <button
+                onClick={() => setActiveTab('tafsir')}
+                className={`flex items-center gap-1.5 py-2 px-2.5 border-b-2 font-medium text-xs sm:text-sm cursor-pointer transition-colors whitespace-nowrap ${
+                  activeTab === 'tafsir'
+                    ? 'border-primary text-primary font-bold'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
               >
-                {TAFSIR_OPTIONS.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Verse Tafsir</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('surahContext')}
+                className={`flex items-center gap-1.5 py-2 px-2.5 border-b-2 font-medium text-xs sm:text-sm cursor-pointer transition-colors whitespace-nowrap ${
+                  activeTab === 'surahContext'
+                    ? 'border-primary text-primary font-bold'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Info className="w-3.5 h-3.5" />
+                <span>Surah Context</span>
+              </button>
             </div>
-          )}
+
+            {/* Tafsir Selector Dropdown (when on Tafsir tab) */}
+            {activeTab === 'tafsir' && (
+              <div className="flex items-center justify-between sm:justify-end gap-2 pb-1.5 sm:pb-0">
+                <span className="text-xs text-muted-foreground shrink-0">Scholar:</span>
+                <select
+                  value={selectedTafsirId}
+                  onChange={(e) => setSelectedTafsirId(Number(e.target.value))}
+                  className="text-xs px-2 py-1 bg-card border border-border rounded-[2px] text-foreground focus:outline-primary cursor-pointer max-w-[200px] truncate"
+                >
+                  {TAFSIR_OPTIONS.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Content Body */}
@@ -318,6 +328,7 @@ export default function VerseContextModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

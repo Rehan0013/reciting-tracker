@@ -58,7 +58,7 @@ export default function SurahList() {
   const lastReadSurahMeta = lastRead ? QURAN_SURAHS[lastRead.surahNumber - 1] : null;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-fade-in select-none">
+    <div className="max-w-7xl mx-auto space-y-6 pb-24 md:pb-12 animate-fade-in select-none">
       {/* ======================================================== */}
       {/* HERO / WELCOME HEADER                                   */}
       {/* ======================================================== */}
@@ -159,10 +159,10 @@ export default function SurahList() {
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           <button
             onClick={() => setFilterType('all')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-[2px] border cursor-pointer transition-colors whitespace-nowrap ${
+            className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-[2px] border cursor-pointer transition-colors whitespace-nowrap ${
               filterType === 'all'
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-card text-muted-foreground hover:text-foreground border-border'
@@ -172,7 +172,7 @@ export default function SurahList() {
           </button>
           <button
             onClick={() => setFilterType('meccan')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-[2px] border cursor-pointer transition-colors whitespace-nowrap ${
+            className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-[2px] border cursor-pointer transition-colors whitespace-nowrap ${
               filterType === 'meccan'
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-card text-muted-foreground hover:text-foreground border-border'
@@ -182,7 +182,7 @@ export default function SurahList() {
           </button>
           <button
             onClick={() => setFilterType('medinan')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-[2px] border cursor-pointer transition-colors whitespace-nowrap ${
+            className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-[2px] border cursor-pointer transition-colors whitespace-nowrap ${
               filterType === 'medinan'
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-card text-muted-foreground hover:text-foreground border-border'
@@ -192,7 +192,7 @@ export default function SurahList() {
           </button>
           <button
             onClick={() => setFilterType('juz')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-[2px] border cursor-pointer transition-colors whitespace-nowrap ${
+            className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-[2px] border cursor-pointer transition-colors whitespace-nowrap ${
               filterType === 'juz'
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-card text-muted-foreground hover:text-foreground border-border'

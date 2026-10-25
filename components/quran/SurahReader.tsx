@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
+  ArrowUp,
   ChevronLeft,
   ChevronRight,
   Play,
@@ -97,9 +98,31 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
   // Bookmarks & Copied feedback
   const [bookmarkedAyahs, setBookmarkedAyahs] = useState<number[]>([]);
   const [copiedAyah, setCopiedAyah] = useState<number | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
 
   // Refs for auto-scroll
   const verseRefs = useRef<{ [key: number]: HTMLElement | null }>({});
+
+  // Scroll listener for Back to Top button
+  useEffect(() => {
+    const container = document.getElementById('main-scroll-container');
+    if (!container) return;
+
+    const onScroll = () => {
+      setShowScrollTop(container.scrollTop > 400);
+    };
+
+    container.addEventListener('scroll', onScroll, { passive: true });
+    return () => container.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const handleScrollToTop = () => {
+    const mainContainer = document.getElementById('main-scroll-container');
+    if (mainContainer) {
+      mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Load user preferences and bookmarks from localStorage on mount
   useEffect(() => {
@@ -302,117 +325,163 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
   const contextAyahObj = ayahs.find((a) => a.numberInSurah === contextAyahNumber) || ayahs[0];
 
   return (
-    <div className="max-w-5xl mx-auto pb-28 md:pb-24 animate-fade-in select-none">
+    <div
+      className={`max-w-5xl mx-auto ${
+        isPlayerOpen ? 'pb-72 sm:pb-64 md:pb-44' : 'pb-32 md:pb-20'
+      } animate-fade-in select-none transition-all duration-200`}
+    >
       {/* ======================================================== */}
-      {/* TOP NAVIGATION BAR                                      */}
+      {/* TOP NAVIGATION BAR (STICKY & COMPACT)                   */}
       {/* ======================================================== */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-xs border-b border-border py-2.5 px-3 sm:px-4 mb-4">
-        <div className="flex items-center justify-between gap-2">
-          {/* Back button & Surah Jump */}
-          <div className="flex items-center gap-2">
-            <Link
-              href="/quran"
-              className="p-2 border border-border bg-card hover:bg-secondary rounded-[2px] text-foreground flex items-center justify-center cursor-pointer transition-colors"
-              title="Back to Surah List"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-
-            {/* Quick Surah Dropdown Selector */}
-            <select
-              value={surahNumber}
-              onChange={handleSurahJump}
-              className="text-xs sm:text-sm font-semibold px-2 py-1.5 bg-card border border-border rounded-[2px] text-foreground focus:outline-primary cursor-pointer max-w-[150px] sm:max-w-[200px]"
-            >
-              {QURAN_SURAHS.map((s) => (
-                <option key={s.number} value={s.number}>
-                  {s.number}. {s.english} ({s.arabic})
-                </option>
-              ))}
-            </select>
-
-            {/* Quick Ayah Jump Dropdown */}
-            {ayahs.length > 0 && (
-              <select
-                value={activeAyahNumber}
-                onChange={handleAyahJump}
-                className="text-xs px-2 py-1.5 bg-card border border-border rounded-[2px] text-foreground focus:outline-primary cursor-pointer"
-                title="Jump to verse"
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-border py-2 px-3 sm:px-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          {/* Main Selectors Row */}
+          <div className="flex items-center justify-between sm:justify-start gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Link
+                href="/quran"
+                className="w-9 h-9 border border-border bg-card hover:bg-secondary rounded-[2px] text-foreground flex items-center justify-center cursor-pointer transition-colors shrink-0"
+                title="Back to Surah List"
               >
-                {ayahs.map((a) => (
-                  <option key={a.numberInSurah} value={a.numberInSurah}>
-                    Ayah {a.numberInSurah}
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+
+              {/* Quick Surah Dropdown Selector */}
+              <select
+                value={surahNumber}
+                onChange={handleSurahJump}
+                className="text-xs sm:text-sm font-semibold px-2 py-1.5 bg-card border border-border rounded-[2px] text-foreground focus:outline-primary cursor-pointer max-w-[160px] sm:max-w-[210px] truncate"
+              >
+                {QURAN_SURAHS.map((s) => (
+                  <option key={s.number} value={s.number}>
+                    {s.number}. {s.english} ({s.arabic})
                   </option>
                 ))}
               </select>
-            )}
+
+              {/* Quick Ayah Jump Dropdown */}
+              {ayahs.length > 0 && (
+                <select
+                  value={activeAyahNumber}
+                  onChange={handleAyahJump}
+                  className="text-xs font-medium px-2 py-1.5 bg-card border border-border rounded-[2px] text-foreground focus:outline-primary cursor-pointer shrink-0"
+                  title="Jump to verse"
+                >
+                  {ayahs.map((a) => (
+                    <option key={a.numberInSurah} value={a.numberInSurah}>
+                      Ayah {a.numberInSurah}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {/* Mobile Settings Toggle (Top right on mobile) */}
+            <div className="flex items-center gap-1 sm:hidden">
+              <button
+                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                className={`w-9 h-9 border rounded-[2px] cursor-pointer flex items-center justify-center transition-colors ${
+                  isSettingsOpen
+                    ? 'border-primary bg-primary text-primary-foreground font-semibold'
+                    : 'border-border bg-card hover:bg-secondary text-foreground'
+                }`}
+                title="Reader Settings"
+                aria-label="Reader Settings"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          {/* Action buttons (Prev/Next Surah, Settings, Context, Log) */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Previous Surah */}
-            {prevSurahMeta && (
-              <Link
-                href={`/quran/${prevSurahMeta.number}`}
-                className="p-1.5 sm:p-2 border border-border bg-card hover:bg-secondary rounded-[2px] text-foreground hidden sm:flex items-center justify-center cursor-pointer"
-                title={`Previous: Surah ${prevSurahMeta.english}`}
+          {/* Action buttons (Prev/Next Surah, Context, Log, Settings) */}
+          <div className="flex items-center justify-between sm:justify-end gap-1.5 sm:gap-2 pt-1 sm:pt-0 border-t border-border/40 sm:border-t-0">
+            {/* Previous & Next Surah Quick Nav */}
+            <div className="flex items-center gap-1">
+              {prevSurahMeta ? (
+                <Link
+                  href={`/quran/${prevSurahMeta.number}`}
+                  className="px-2 py-1.5 border border-border bg-card hover:bg-secondary rounded-[2px] text-foreground text-xs flex items-center gap-1 cursor-pointer"
+                  title={`Previous: Surah ${prevSurahMeta.english}`}
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-[11px] font-medium">{prevSurahMeta.english}</span>
+                </Link>
+              ) : (
+                <div />
+              )}
+
+              {nextSurahMeta ? (
+                <Link
+                  href={`/quran/${nextSurahMeta.number}`}
+                  className="px-2 py-1.5 border border-border bg-card hover:bg-secondary rounded-[2px] text-foreground text-xs flex items-center gap-1 cursor-pointer"
+                  title={`Next: Surah ${nextSurahMeta.english}`}
+                >
+                  <span className="hidden sm:inline text-[11px] font-medium">{nextSurahMeta.english}</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              ) : (
+                <div />
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {/* Surah Revelation Context Button */}
+              <button
+                onClick={() => handleOpenContext(1)}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary rounded-[2px] cursor-pointer"
+                title="Surah Revelation Context & Background"
               >
-                <ChevronLeft className="w-4 h-4" />
-              </Link>
-            )}
+                <Info className="w-3.5 h-3.5" />
+                <span className="text-[11px]">Context</span>
+              </button>
 
-            {/* Next Surah */}
-            {nextSurahMeta && (
-              <Link
-                href={`/quran/${nextSurahMeta.number}`}
-                className="p-1.5 sm:p-2 border border-border bg-card hover:bg-secondary rounded-[2px] text-foreground hidden sm:flex items-center justify-center cursor-pointer"
-                title={`Next: Surah ${nextSurahMeta.english}`}
+              {/* Log to Tracker Button */}
+              <button
+                onClick={() => setLogModalOpen(true)}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold border border-accent bg-accent/15 hover:bg-accent/25 text-accent rounded-[2px] cursor-pointer"
+                title="Log this reading to your daily tracker"
               >
-                <ChevronRight className="w-4 h-4" />
-              </Link>
-            )}
+                <CalendarPlus className="w-3.5 h-3.5" />
+                <span className="text-[11px]">Log</span>
+              </button>
 
-            {/* Surah Revelation Context Button */}
-            <button
-              onClick={() => handleOpenContext(1)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary rounded-[2px] cursor-pointer"
-              title="Surah Revelation Context & Background"
-            >
-              <Info className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Surah Context</span>
-            </button>
-
-            {/* Log to Tracker Button */}
-            <button
-              onClick={() => setLogModalOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold border border-accent bg-accent/10 hover:bg-accent/20 text-accent rounded-[2px] cursor-pointer"
-              title="Log this reading to your daily tracker"
-            >
-              <CalendarPlus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Log</span>
-            </button>
-
-            {/* Settings Toggle */}
-            <button
-              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-              className={`p-1.5 sm:p-2 border rounded-[2px] cursor-pointer transition-colors ${
-                isSettingsOpen
-                  ? 'border-primary bg-primary text-primary-foreground font-semibold'
-                  : 'border-border bg-card hover:bg-secondary text-foreground'
-              }`}
-              title="Reader Settings"
-              aria-label="Reader Settings"
-            >
-              <SlidersHorizontal className="w-4 h-4" />
-            </button>
+              {/* Desktop Settings Toggle */}
+              <button
+                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                className={`hidden sm:flex items-center justify-center w-9 h-9 border rounded-[2px] cursor-pointer transition-colors ${
+                  isSettingsOpen
+                    ? 'border-primary bg-primary text-primary-foreground font-semibold'
+                    : 'border-border bg-card hover:bg-secondary text-foreground'
+                }`}
+                title="Reader Settings"
+                aria-label="Reader Settings"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* ======================================================== */}
-        {/* COLLAPSIBLE SETTINGS DRAWER                             */}
-        {/* ======================================================== */}
-        {isSettingsOpen && (
-          <div className="mt-3 p-4 bg-card border-2 border-border rounded-card grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in shadow-md">
+      {/* ======================================================== */}
+      {/* COLLAPSIBLE SETTINGS DRAWER (SCROLLS NATURALLY WITH PAGE)*/}
+      {/* ======================================================== */}
+      {isSettingsOpen && (
+        <div className="mb-4 p-4 bg-card border-2 border-border rounded-card animate-fade-in shadow-md">
+          <div className="flex items-center justify-between pb-2 mb-3 border-b border-border">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-accent uppercase tracking-wider">
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>Reader Settings</span>
+            </div>
+            <button
+              onClick={() => setIsSettingsOpen(false)}
+              className="text-xs text-muted-foreground hover:text-foreground font-medium underline cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Translation Picker */}
             <div>
               <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
@@ -521,8 +590,8 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ======================================================== */}
       {/* LOADING & ERROR STATES                                  */}
@@ -552,13 +621,12 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
           {/* ======================================================== */}
           {/* SURAH HEADER ORNAMENT BANNER                            */}
           {/* ======================================================== */}
-          <div className="relative mb-6 p-6 sm:p-8 bg-card border-2 border-border rounded-card text-center overflow-hidden">
-            {/* Subtle background Islamic pattern accent */}
+          <div className="relative mb-6 p-5 sm:p-8 bg-card border-2 border-border rounded-card text-center overflow-hidden">
             <div className="absolute inset-0 opacity-5 pointer-events-none islamic-pattern" />
 
             <div className="relative z-10 space-y-3">
               {/* Surah Number & Badges */}
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-2 flex-wrap">
                 <span className="px-2.5 py-0.5 border border-border bg-secondary text-accent font-semibold text-xs rounded-[2px]">
                   Surah {surah?.number}
                 </span>
@@ -578,8 +646,8 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
                 &ldquo;{surah?.englishNameTranslation}&rdquo;
               </p>
 
-              {/* Listen to Surah trigger */}
-              <div className="pt-2 flex items-center justify-center gap-3">
+              {/* Play full surah & Surah context triggers */}
+              <div className="pt-2 flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
                 <button
                   onClick={() => handlePlayAyah(1)}
                   className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs sm:text-sm font-semibold rounded-[2px] cursor-pointer transition-colors shadow-xs"
@@ -635,18 +703,18 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
                     }}
                     className={`p-4 sm:p-5 rounded-card border-2 transition-all duration-200 ${
                       isActive
-                        ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary/20'
+                        ? 'border-primary bg-primary/[0.04] shadow-md ring-1 ring-primary/30'
                         : 'border-border bg-card hover:border-border/80'
                     }`}
                   >
                     {/* Verse Header Row */}
-                    <div className="flex items-center justify-between pb-3 border-b border-border/50 text-xs">
+                    <div className="flex items-center justify-between pb-3 border-b border-border/50 text-xs gap-2">
                       {/* Left: Ayah number & badges */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         <span
-                          className={`w-7 h-7 border rounded-[2px] font-serif font-bold text-xs flex items-center justify-center ${
+                          className={`w-7 h-7 sm:w-8 sm:h-8 border rounded-[2px] font-serif font-bold text-xs flex items-center justify-center shrink-0 ${
                             isActive
-                              ? 'bg-primary text-primary-foreground border-primary'
+                              ? 'bg-primary text-primary-foreground border-primary shadow-xs'
                               : 'bg-secondary text-foreground border-border'
                           }`}
                         >
@@ -666,33 +734,39 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
                       </div>
 
                       {/* Right: Actions (Listen, Tafsir, Copy, Bookmark) */}
-                      <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                         {/* Play/Listen Verse */}
                         <button
                           onClick={() => handlePlayAyah(ayah.numberInSurah)}
-                          className={`p-1.5 border rounded-[2px] cursor-pointer transition-colors ${
+                          className={`p-1.5 sm:px-2 sm:py-1 border rounded-[2px] cursor-pointer transition-colors flex items-center gap-1 text-xs ${
                             isActive && isPlaying
-                              ? 'border-primary bg-primary text-primary-foreground font-bold'
+                              ? 'border-primary bg-primary text-primary-foreground font-bold shadow-xs'
                               : 'border-border bg-card hover:bg-secondary text-primary'
                           }`}
                           title="Listen to this verse"
                           aria-label="Listen to this verse"
                         >
                           {isActive && isPlaying ? (
-                            <Pause className="w-3.5 h-3.5 fill-current" />
+                            <>
+                              <Pause className="w-3.5 h-3.5 fill-current" />
+                              <span className="text-[10px] hidden sm:inline">Playing</span>
+                            </>
                           ) : (
-                            <Play className="w-3.5 h-3.5 fill-current ml-0.2" />
+                            <>
+                              <Play className="w-3.5 h-3.5 fill-current ml-0.2" />
+                              <span className="text-[10px] hidden sm:inline">Play</span>
+                            </>
                           )}
                         </button>
 
                         {/* Context / Tafsir Button */}
                         <button
                           onClick={() => handleOpenContext(ayah.numberInSurah)}
-                          className="flex items-center gap-1 px-2 py-1.5 border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-[11px] rounded-[2px] cursor-pointer"
+                          className="flex items-center gap-1 px-2 py-1.5 border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary font-semibold text-[11px] rounded-[2px] cursor-pointer transition-colors"
                           title="View Verse Context & Tafsir commentary"
                         >
                           <Sparkles className="w-3 h-3 text-accent" />
-                          <span>Context / Tafsir</span>
+                          <span>Tafsir</span>
                         </button>
 
                         {/* Copy verse */}
@@ -704,7 +778,7 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
                               ayah.numberInSurah
                             )
                           }
-                          className="p-1.5 border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground rounded-[2px] cursor-pointer"
+                          className="p-1.5 border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground rounded-[2px] cursor-pointer transition-colors"
                           title="Copy verse and translation"
                         >
                           {copiedAyah === ayah.numberInSurah ? (
@@ -717,7 +791,7 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
                         {/* Bookmark */}
                         <button
                           onClick={() => toggleBookmark(ayah.numberInSurah)}
-                          className={`p-1.5 border rounded-[2px] cursor-pointer ${
+                          className={`p-1.5 border rounded-[2px] cursor-pointer transition-colors ${
                             isBookmarked
                               ? 'border-accent bg-accent/20 text-accent font-bold'
                               : 'border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground'
@@ -737,11 +811,14 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
                     <div className="py-4 select-text">
                       <p
                         dir="rtl"
-                        className="font-serif text-foreground text-right leading-[2.4] font-normal"
-                        style={{ fontSize: `${arabicFontSize}px` }}
+                        className="font-serif text-foreground text-right leading-[2.5] sm:leading-[2.7] font-normal"
+                        style={{
+                          fontSize: `${arabicFontSize}px`,
+                          wordSpacing: '2px',
+                        }}
                       >
                         {displayArabic}{' '}
-                        <span className="font-serif text-accent font-bold text-[0.8em] select-none mx-1 inline-block">
+                        <span className="font-serif text-accent font-bold text-[0.8em] select-none mx-1.5 inline-block align-middle">
                           ﴿{toArabicNumerals(ayah.numberInSurah)}﴾
                         </span>
                       </p>
@@ -749,7 +826,7 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
 
                     {/* Translation Text */}
                     {showTranslation && ayah.textTranslation && (
-                      <div className="pt-2 border-t border-border/40 select-text">
+                      <div className="pt-2.5 border-t border-border/40 select-text">
                         <p
                           className="text-foreground/90 leading-relaxed font-sans"
                           style={{ fontSize: `${translationFontSize}px` }}
@@ -768,10 +845,10 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
           {/* READING VIEW: CONTINUOUS MUSHAF FLOW                    */}
           {/* ======================================================== */}
           {viewMode === 'mushaf' && (
-            <div className="p-6 sm:p-8 bg-card border-2 border-border rounded-card select-text">
+            <div className="p-5 sm:p-8 bg-card border-2 border-border rounded-card select-text">
               <div
                 dir="rtl"
-                className="font-serif text-foreground text-justify leading-[2.6]"
+                className="font-serif text-foreground text-justify leading-[2.6] sm:leading-[2.8]"
                 style={{ fontSize: `${arabicFontSize}px` }}
               >
                 {ayahs.map((ayah) => {
@@ -794,7 +871,7 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
                       title={`Ayah ${ayah.numberInSurah} (Click to play, Double-click for Tafsir)`}
                     >
                       {displayArabic}{' '}
-                      <span className="text-accent font-bold text-[0.85em] select-none mx-1">
+                      <span className="text-accent font-bold text-[0.85em] select-none mx-1.5 inline-block align-middle">
                         ﴿{toArabicNumerals(ayah.numberInSurah)}﴾
                       </span>{' '}
                     </span>
@@ -815,7 +892,7 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
             {prevSurahMeta ? (
               <Link
                 href={`/quran/${prevSurahMeta.number}`}
-                className="flex items-center gap-2 px-4 py-2 border border-border bg-card hover:bg-secondary text-foreground text-xs sm:text-sm font-semibold rounded-[2px] cursor-pointer"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 border border-border bg-card hover:bg-secondary text-foreground text-xs sm:text-sm font-semibold rounded-[2px] cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span>
@@ -827,16 +904,18 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
             )}
 
             <button
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="text-xs text-muted-foreground hover:text-foreground font-semibold cursor-pointer underline"
+              onClick={handleScrollToTop}
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-border bg-card hover:bg-secondary text-xs text-muted-foreground hover:text-foreground font-semibold rounded-[2px] cursor-pointer transition-colors"
+              title="Scroll back to the top of the Surah"
             >
-              Back to Top ↑
+              <ArrowUp className="w-3.5 h-3.5 text-primary" />
+              <span>Back to Top</span>
             </button>
 
             {nextSurahMeta ? (
               <Link
                 href={`/quran/${nextSurahMeta.number}`}
-                className="flex items-center gap-2 px-4 py-2 border border-border bg-card hover:bg-secondary text-foreground text-xs sm:text-sm font-semibold rounded-[2px] cursor-pointer"
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 border border-border bg-card hover:bg-secondary text-foreground text-xs sm:text-sm font-semibold rounded-[2px] cursor-pointer"
               >
                 <span>
                   {nextSurahMeta.number}. {nextSurahMeta.english}
@@ -851,7 +930,26 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
       )}
 
       {/* ======================================================== */}
-      {/* FLOATING AUDIO PLAYER BAR                               */}
+      {/* FLOATING QUICK BACK TO TOP BUTTON (WHEN SCROLLED)       */}
+      {/* ======================================================== */}
+      {showScrollTop && (
+        <button
+          onClick={handleScrollToTop}
+          className={`fixed z-30 flex items-center gap-1.5 px-3.5 py-2 bg-card border-2 border-border hover:border-primary text-foreground text-xs font-semibold rounded-full shadow-xl transition-all duration-200 cursor-pointer ${
+            isPlayerOpen
+              ? 'bottom-36 md:bottom-24 right-4 sm:right-6'
+              : 'bottom-20 md:bottom-6 right-4 sm:right-6'
+          }`}
+          title="Scroll back to top"
+          aria-label="Back to top"
+        >
+          <ArrowUp className="w-4 h-4 text-primary" />
+          <span className="hidden sm:inline">Top</span>
+        </button>
+      )}
+
+      {/* ======================================================== */}
+      {/* AUDIO PLAYER BAR                                        */}
       {/* ======================================================== */}
       {isPlayerOpen && surah && currentAyahObj && (
         <AudioPlayerBar

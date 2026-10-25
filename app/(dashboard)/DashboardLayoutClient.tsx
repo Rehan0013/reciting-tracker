@@ -295,7 +295,10 @@ export default function DashboardLayoutClient({
         </header>
 
         {/* Page Content Scroll Container */}
-        <main className="flex-1 overflow-y-auto focus:outline-none p-4 pb-20 md:pb-4 relative bg-background">
+        <main
+          id="main-scroll-container"
+          className="flex-1 overflow-y-auto focus:outline-none p-4 pb-20 md:pb-4 relative bg-background"
+        >
           {children}
         </main>
 

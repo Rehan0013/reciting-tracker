@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, CheckCircle2, BookmarkCheck, Calendar, BookOpen, Loader2 } from 'lucide-react';
 
 interface LogRecitationModalProps {
@@ -22,6 +23,7 @@ export default function LogRecitationModal({
   totalVerses,
   currentAyahNumber,
 }: LogRecitationModalProps) {
+  const [mounted, setMounted] = useState(false);
   const todayStr = new Date().toISOString().split('T')[0];
   const [date, setDate] = useState(todayStr);
   const [verseCount, setVerseCount] = useState<number>(totalVerses);
@@ -34,7 +36,11 @@ export default function LogRecitationModal({
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,8 +89,8 @@ export default function LogRecitationModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-fade-in">
       <div
         className="w-full max-w-md bg-card border-2 border-border rounded-card p-5 sm:p-6 shadow-2xl relative"
         role="dialog"
@@ -216,6 +222,7 @@ export default function LogRecitationModal({
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
