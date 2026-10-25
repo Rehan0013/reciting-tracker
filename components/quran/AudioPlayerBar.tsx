@@ -99,10 +99,78 @@ export default function AudioPlayerBar({
     }
   }, [playbackSpeed]);
 
+  const desktopProgressRef = useRef<HTMLDivElement | null>(null);
+  const mobileProgressRef = useRef<HTMLDivElement | null>(null);
+  const desktopScrubberRef = useRef<HTMLInputElement | null>(null);
+  const mobileScrubberRef = useRef<HTMLInputElement | null>(null);
+  const desktopTimeRef = useRef<HTMLSpanElement | null>(null);
+  const mobileCurrentTimeRef = useRef<HTMLSpanElement | null>(null);
+  const isSeekingRef = useRef<boolean>(false);
+
+  // 60fps buttery-smooth progress bar loop
+  useEffect(() => {
+    let animId: number;
+
+    const renderLoop = () => {
+      const audio = audioRef.current;
+      if (audio && !isSeekingRef.current && audio.duration > 0) {
+        const cur = audio.currentTime;
+        const dur = audio.duration;
+        const pct = Math.min(100, Math.max(0, (cur / dur) * 100));
+
+        // Direct DOM updates: 60fps hardware composited, zero React re-render overhead
+        if (desktopProgressRef.current) {
+          desktopProgressRef.current.style.width = `${pct}%`;
+        }
+        if (mobileProgressRef.current) {
+          mobileProgressRef.current.style.width = `${pct}%`;
+        }
+
+        if (desktopScrubberRef.current) {
+          desktopScrubberRef.current.value = String(cur);
+        }
+        if (mobileScrubberRef.current) {
+          mobileScrubberRef.current.value = String(cur);
+        }
+
+        const formattedCur = formatTime(cur);
+        if (mobileCurrentTimeRef.current && mobileCurrentTimeRef.current.textContent !== formattedCur) {
+          mobileCurrentTimeRef.current.textContent = formattedCur;
+        }
+        if (desktopTimeRef.current) {
+          const fullTime = `${formattedCur} / ${formatTime(dur)}`;
+          if (desktopTimeRef.current.textContent !== fullTime) {
+            desktopTimeRef.current.textContent = fullTime;
+          }
+        }
+      }
+
+      if (isPlaying) {
+        animId = requestAnimationFrame(renderLoop);
+      }
+    };
+
+    if (isPlaying) {
+      animId = requestAnimationFrame(renderLoop);
+    }
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [isPlaying]);
+
   const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-      setDuration(audioRef.current.duration || 0);
+    if (audioRef.current && !isSeekingRef.current) {
+      const cur = audioRef.current.currentTime;
+      const dur = audioRef.current.duration || 0;
+      setCurrentTime(cur);
+      setDuration(dur);
+
+      if (dur > 0) {
+        const pct = Math.min(100, Math.max(0, (cur / dur) * 100));
+        if (desktopProgressRef.current) desktopProgressRef.current.style.width = `${pct}%`;
+        if (mobileProgressRef.current) mobileProgressRef.current.style.width = `${pct}%`;
+      }
     }
   };
 
@@ -121,12 +189,30 @@ export default function AudioPlayerBar({
     }
   };
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTime = parseFloat(e.target.value);
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
+  const handleSeekStart = () => {
+    isSeekingRef.current = true;
+  };
+
+  const handleSeekInput = (val: number) => {
+    const dur = duration || audioRef.current?.duration || 0;
+    if (dur > 0) {
+      const pct = Math.min(100, Math.max(0, (val / dur) * 100));
+      if (desktopProgressRef.current) desktopProgressRef.current.style.width = `${pct}%`;
+      if (mobileProgressRef.current) mobileProgressRef.current.style.width = `${pct}%`;
     }
+    const formatted = formatTime(val);
+    if (mobileCurrentTimeRef.current) mobileCurrentTimeRef.current.textContent = formatted;
+    if (desktopTimeRef.current) {
+      desktopTimeRef.current.textContent = `${formatted} / ${formatTime(dur)}`;
+    }
+  };
+
+  const handleSeekEnd = (val: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = val;
+      setCurrentTime(val);
+    }
+    isSeekingRef.current = false;
   };
 
   const toggleMute = () => {
@@ -199,22 +285,32 @@ export default function AudioPlayerBar({
             <div className="space-y-1.5 pt-1">
               <div className="relative w-full h-3 bg-secondary rounded-full overflow-hidden flex items-center">
                 <div
-                  className="h-full bg-primary transition-all duration-100"
+                  ref={mobileProgressRef}
+                  className="h-full bg-primary"
                   style={{ width: `${progressPercent}%` }}
                 />
                 <input
+                  ref={mobileScrubberRef}
                   type="range"
                   min={0}
                   max={duration || 100}
-                  step={0.1}
-                  value={currentTime}
-                  onChange={handleSeek}
+                  step="any"
+                  defaultValue={currentTime}
+                  onPointerDown={handleSeekStart}
+                  onPointerUp={(e) => handleSeekEnd(parseFloat((e.target as HTMLInputElement).value))}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    handleSeekInput(val);
+                    if (!isSeekingRef.current) {
+                      handleSeekEnd(val);
+                    }
+                  }}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   aria-label="Audio scrubber"
                 />
               </div>
               <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-                <span>{formatTime(currentTime)}</span>
+                <span ref={mobileCurrentTimeRef}>{formatTime(currentTime)}</span>
                 <span>{formatTime(duration)}</span>
               </div>
             </div>
@@ -334,18 +430,28 @@ export default function AudioPlayerBar({
         {/* Scrubber Line (Edge-to-edge on top of the bar) */}
         <div className="relative w-full h-1.5 bg-secondary group cursor-pointer overflow-hidden">
           <div
-            className="h-full bg-primary transition-all duration-100 relative"
+            ref={desktopProgressRef}
+            className="h-full bg-primary relative"
             style={{ width: `${progressPercent}%` }}
           >
             <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-accent rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <input
+            ref={desktopScrubberRef}
             type="range"
             min={0}
             max={duration || 100}
-            step={0.1}
-            value={currentTime}
-            onChange={handleSeek}
+            step="any"
+            defaultValue={currentTime}
+            onPointerDown={handleSeekStart}
+            onPointerUp={(e) => handleSeekEnd(parseFloat((e.target as HTMLInputElement).value))}
+            onChange={(e) => {
+              const val = parseFloat(e.target.value);
+              handleSeekInput(val);
+              if (!isSeekingRef.current) {
+                handleSeekEnd(val);
+              }
+            }}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             aria-label="Audio progress scrubber"
           />
@@ -454,7 +560,10 @@ export default function AudioPlayerBar({
           {/* ==================================================== */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Time display (Desktop) */}
-            <span className="text-xs text-muted-foreground font-mono hidden md:inline">
+            <span
+              ref={desktopTimeRef}
+              className="text-xs text-muted-foreground font-mono hidden md:inline"
+            >
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
 
