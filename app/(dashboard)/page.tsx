@@ -6,7 +6,7 @@ import MonthNavigator from '@/components/calendar/MonthNavigator';
 import HolidayBanner from '@/components/calendar/HolidayBanner';
 import CalendarGrid from '@/components/calendar/CalendarGrid';
 import Link from 'next/link';
-import { Flame, Moon, Plus, X, Calendar as CalendarIcon, Loader } from 'lucide-react';
+import { Flame, Moon, Plus, X, Calendar as CalendarIcon, Loader, BookOpen } from 'lucide-react';
 
 export default function CalendarPage() {
   const router = useRouter();
@@ -240,12 +240,21 @@ export default function CalendarPage() {
             </p>
           </div>
         </div>
-        <Link
-          href={`/day/${todayStr}`}
-          className="px-4 py-2 border border-border bg-primary text-primary-foreground font-semibold text-sm hover:bg-opacity-90 rounded-btn min-h-[44px] flex items-center justify-center cursor-pointer transition-colors duration-100"
-        >
-          log today
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/quran"
+            className="px-3.5 py-2 border border-border bg-secondary hover:bg-card text-foreground font-semibold text-sm rounded-btn min-h-[44px] flex items-center justify-center gap-1.5 cursor-pointer transition-colors duration-100"
+          >
+            <BookOpen className="w-4 h-4 text-primary" />
+            <span>read quran</span>
+          </Link>
+          <Link
+            href={`/day/${todayStr}`}
+            className="px-4 py-2 border border-border bg-primary text-primary-foreground font-semibold text-sm hover:bg-opacity-90 rounded-btn min-h-[44px] flex items-center justify-center cursor-pointer transition-colors duration-100"
+          >
+            log today
+          </Link>
+        </div>
       </div>
 
       {/* 4. Month Navigator & Calendar Grid Wrapper */}

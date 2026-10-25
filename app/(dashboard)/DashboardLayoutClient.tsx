@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Menu,
+  BookOpen,
 } from 'lucide-react';
 
 interface DashboardLayoutClientProps {
@@ -102,6 +103,11 @@ export default function DashboardLayoutClient({
       icon: Calendar,
     },
     {
+      label: 'the quran',
+      href: '/quran',
+      icon: BookOpen,
+    },
+    {
       label: 'history',
       href: '/history',
       icon: History,
@@ -128,6 +134,7 @@ export default function DashboardLayoutClient({
       const datePart = pathname.split('/day/')[1];
       return datePart ? `log: ${datePart}` : 'day detail';
     }
+    if (pathname.startsWith('/quran')) return 'the holy quran';
     if (pathname.startsWith('/history')) return 'monthly history';
     if (pathname.startsWith('/profile')) return 'my profile';
     return 'quran tracker';
@@ -288,7 +295,10 @@ export default function DashboardLayoutClient({
         </header>
 
         {/* Page Content Scroll Container */}
-        <main className="flex-1 overflow-y-auto focus:outline-none p-4 pb-20 md:pb-4 relative bg-background">
+        <main
+          id="main-scroll-container"
+          className="flex-1 overflow-y-auto focus:outline-none p-4 pb-20 md:pb-4 relative bg-background"
+        >
           {children}
         </main>
 
