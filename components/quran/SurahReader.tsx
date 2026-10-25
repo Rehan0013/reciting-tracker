@@ -902,16 +902,6 @@ export default function SurahReader({ surahNumber }: SurahReaderProps) {
             ) : (
               <div />
             )}
-
-            <button
-              onClick={handleScrollToTop}
-              className="flex items-center gap-1.5 px-3 py-1.5 border border-border bg-card hover:bg-secondary text-xs text-muted-foreground hover:text-foreground font-semibold rounded-[2px] cursor-pointer transition-colors"
-              title="Scroll back to the top of the Surah"
-            >
-              <ArrowUp className="w-3.5 h-3.5 text-primary" />
-              <span>Back to Top</span>
-            </button>
-
             {nextSurahMeta ? (
               <Link
                 href={`/quran/${nextSurahMeta.number}`}
