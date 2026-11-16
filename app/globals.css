@@ -109,3 +109,91 @@ input, select, textarea, button {
 .animate-fade-in {
   animation: fadeIn 0.4s ease-out forwards;
 }
+
+/* ======================================================== */
+/* View Transitions API: Organic Ink Bleed Theme Transition */
+/* ======================================================== */
+::view-transition-group(root),
+::view-transition-image-pair(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none !important;
+  mix-blend-mode: normal;
+}
+
+/* 1. SPREADING DARK INK: Light -> Dark */
+/* The incoming dark view is clipped to 0px initially to prevent black screen flash */
+html[data-theme-transition="spread"]::view-transition-new(root) {
+  z-index: 9999;
+  clip-path: circle(0px at var(--ink-x, 50%) var(--ink-y, 50%));
+  filter: drop-shadow(0 0 16px rgba(10, 15, 12, 0.90))
+          drop-shadow(0 0 38px rgba(15, 20, 16, 0.70))
+          drop-shadow(0 0 75px rgba(29, 78, 58, 0.50));
+  -webkit-mask-image: radial-gradient(
+    circle at var(--ink-x, 50%) var(--ink-y, 50%),
+    #000 0%,
+    #000 calc(var(--ink-radius, 0px) * 0.45),
+    rgba(0, 0, 0, 0.85) calc(var(--ink-radius, 0px) * 0.65),
+    rgba(0, 0, 0, 0.55) calc(var(--ink-radius, 0px) * 0.82),
+    rgba(0, 0, 0, 0.22) calc(var(--ink-radius, 0px) * 0.94),
+    rgba(0, 0, 0, 0.08) calc(var(--ink-radius, 0px) * 0.98),
+    transparent var(--ink-radius, 0px)
+  );
+  mask-image: radial-gradient(
+    circle at var(--ink-x, 50%) var(--ink-y, 50%),
+    #000 0%,
+    #000 calc(var(--ink-radius, 0px) * 0.45),
+    rgba(0, 0, 0, 0.85) calc(var(--ink-radius, 0px) * 0.65),
+    rgba(0, 0, 0, 0.55) calc(var(--ink-radius, 0px) * 0.82),
+    rgba(0, 0, 0, 0.22) calc(var(--ink-radius, 0px) * 0.94),
+    rgba(0, 0, 0, 0.08) calc(var(--ink-radius, 0px) * 0.98),
+    transparent var(--ink-radius, 0px)
+  );
+}
+
+html[data-theme-transition="spread"]::view-transition-old(root) {
+  z-index: 1;
+}
+
+/* 2. GATHERING DARK INK: Dark -> Light */
+/* The dark view (old) is on top, contracting back into the button, revealing the light view (new) underneath */
+html[data-theme-transition="gather"]::view-transition-old(root) {
+  z-index: 9999;
+  filter: drop-shadow(0 0 16px rgba(10, 15, 12, 0.90))
+          drop-shadow(0 0 38px rgba(15, 20, 16, 0.70))
+          drop-shadow(0 0 75px rgba(29, 78, 58, 0.50));
+  -webkit-mask-image: radial-gradient(
+    circle at var(--ink-x, 50%) var(--ink-y, 50%),
+    #000 0%,
+    #000 calc(var(--ink-radius, 0px) * 0.45),
+    rgba(0, 0, 0, 0.85) calc(var(--ink-radius, 0px) * 0.65),
+    rgba(0, 0, 0, 0.55) calc(var(--ink-radius, 0px) * 0.82),
+    rgba(0, 0, 0, 0.22) calc(var(--ink-radius, 0px) * 0.94),
+    rgba(0, 0, 0, 0.08) calc(var(--ink-radius, 0px) * 0.98),
+    transparent var(--ink-radius, 0px)
+  );
+  mask-image: radial-gradient(
+    circle at var(--ink-x, 50%) var(--ink-y, 50%),
+    #000 0%,
+    #000 calc(var(--ink-radius, 0px) * 0.45),
+    rgba(0, 0, 0, 0.85) calc(var(--ink-radius, 0px) * 0.65),
+    rgba(0, 0, 0, 0.55) calc(var(--ink-radius, 0px) * 0.82),
+    rgba(0, 0, 0, 0.22) calc(var(--ink-radius, 0px) * 0.94),
+    rgba(0, 0, 0, 0.08) calc(var(--ink-radius, 0px) * 0.98),
+    transparent var(--ink-radius, 0px)
+  );
+}
+
+html[data-theme-transition="gather"]::view-transition-new(root) {
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: auto;
+    filter: none;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}
