@@ -119,14 +119,14 @@ export default function ReadingEntryForm({
 
   // Surahs
   const addSurahItem = () => {
-    setSurahs([...surahs, { id: generateId(), name: '', nameArabic: '', count: 0 }]);
+    setSurahs((prev) => [...prev, { id: generateId(), name: '', nameArabic: '', count: 0 }]);
   };
   const removeSurahItem = (id: string) => {
-    setSurahs(surahs.filter((item) => item.id !== id));
+    setSurahs((prev) => prev.filter((item) => item.id !== id));
   };
   const updateSurahItem = (id: string, updates: Partial<SurahLogItem>) => {
-    setSurahs(
-      surahs.map((item) =>
+    setSurahs((prev) =>
+      prev.map((item) =>
         item.id === id ? { ...item, ...updates } : item
       )
     );
@@ -134,14 +134,14 @@ export default function ReadingEntryForm({
 
   // Dhikrs
   const addDhikrItem = () => {
-    setDhikrs([...dhikrs, { id: generateId(), name: 'SubhanAllah', count: 0 }]);
+    setDhikrs((prev) => [...prev, { id: generateId(), name: 'SubhanAllah', count: 0 }]);
   };
   const removeDhikrItem = (id: string) => {
-    setDhikrs(dhikrs.filter((item) => item.id !== id));
+    setDhikrs((prev) => prev.filter((item) => item.id !== id));
   };
   const updateDhikrItem = (id: string, updates: Partial<DhikrLogItem>) => {
-    setDhikrs(
-      dhikrs.map((item) =>
+    setDhikrs((prev) =>
+      prev.map((item) =>
         item.id === id ? { ...item, ...updates } : item
       )
     );
@@ -149,14 +149,14 @@ export default function ReadingEntryForm({
 
   // Duas
   const addDuaItem = () => {
-    setDuas([...duas, { id: generateId(), name: 'Morning Dua', count: 0 }]);
+    setDuas((prev) => [...prev, { id: generateId(), name: 'Morning Dua', count: 0 }]);
   };
   const removeDuaItem = (id: string) => {
-    setDuas(duas.filter((item) => item.id !== id));
+    setDuas((prev) => prev.filter((item) => item.id !== id));
   };
   const updateDuaItem = (id: string, updates: Partial<DuaLogItem>) => {
-    setDuas(
-      duas.map((item) =>
+    setDuas((prev) =>
+      prev.map((item) =>
         item.id === id ? { ...item, ...updates } : item
       )
     );
@@ -454,9 +454,15 @@ export default function ReadingEntryForm({
                     <div className="flex-1">
                       <SurahPicker
                         value={item.name}
+                        excludeSurahs={surahs
+                          .filter((s) => s.id !== item.id && s.name)
+                          .map((s) => s.name)}
                         onChange={(surah) => {
-                          updateSurahItem(item.id, { name: surah.english, nameArabic: surah.arabic });
-                          if (item.count === 0) updateSurahItem(item.id, { count: 1 });
+                          updateSurahItem(item.id, {
+                            name: surah.english,
+                            nameArabic: surah.arabic,
+                            count: item.count === 0 ? 1 : item.count,
+                          });
                         }}
                       />
                     </div>
@@ -480,7 +486,8 @@ export default function ReadingEntryForm({
               <button
                 type="button"
                 onClick={addSurahItem}
-                className="w-full py-2 border border-border border-dashed bg-background hover:bg-secondary text-xs text-primary font-bold rounded-[2px] cursor-pointer"
+                disabled={surahs.filter((s) => s.name).length >= 114}
+                className="w-full py-2 border border-border border-dashed bg-background hover:bg-secondary text-xs text-primary font-bold rounded-[2px] cursor-pointer disabled:opacity-50"
               >
                 + add another surah
               </button>
@@ -545,8 +552,10 @@ export default function ReadingEntryForm({
                       <DhikrPicker
                         value={item.name}
                         onChange={(val) => {
-                          updateDhikrItem(item.id, { name: val });
-                          if (item.count === 0) updateDhikrItem(item.id, { count: 33 });
+                          updateDhikrItem(item.id, {
+                            name: val,
+                            count: item.count === 0 ? 33 : item.count,
+                          });
                         }}
                       />
                     </div>
@@ -615,8 +624,10 @@ export default function ReadingEntryForm({
                       <select
                         value={item.name}
                         onChange={(e) => {
-                          updateDuaItem(item.id, { name: e.target.value });
-                          if (item.count === 0) updateDuaItem(item.id, { count: 1 });
+                          updateDuaItem(item.id, {
+                            name: e.target.value,
+                            count: item.count === 0 ? 1 : item.count,
+                          });
                         }}
                         className="w-full border border-border bg-background px-3 py-2 rounded-[2px] text-foreground focus:outline-none focus:border-primary text-sm min-h-[40px]"
                       >

@@ -7,9 +7,10 @@ import { Search, ChevronDown, Check } from 'lucide-react';
 interface SurahPickerProps {
   value: string; // Current english name
   onChange: (surah: { english: string; arabic: string }) => void;
+  excludeSurahs?: string[]; // English names or Arabic names of surahs to exclude
 }
 
-export default function SurahPicker({ value, onChange }: SurahPickerProps) {
+export default function SurahPicker({ value, onChange, excludeSurahs }: SurahPickerProps) {
   const [search, setSearch] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -25,18 +26,32 @@ export default function SurahPicker({ value, onChange }: SurahPickerProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filter surahs based on query (by number, English, or Arabic)
+  // Filter surahs based on query (by number, English, or Arabic) and exclude already selected surahs
   const filteredSurahs = useMemo(() => {
-    if (!search.trim()) return SURAHS;
+    const excludeSet = new Set(
+      (excludeSurahs || [])
+        .map((name) => name?.toLowerCase().trim())
+        .filter(Boolean)
+    );
+
+    const available = SURAHS.filter((s) => {
+      // If this surah matches the current picker's value, keep it visible
+      if (value && s.english.toLowerCase() === value.toLowerCase().trim()) {
+        return true;
+      }
+      return !excludeSet.has(s.english.toLowerCase().trim()) && !excludeSet.has(s.arabic.trim());
+    });
+
+    if (!search.trim()) return available;
     const query = search.toLowerCase().trim();
-    return SURAHS.filter(
+    return available.filter(
       (s) =>
         s.number.toString() === query ||
         s.english.toLowerCase().includes(query) ||
         s.meaning.toLowerCase().includes(query) ||
         s.arabic.includes(query)
     );
-  }, [search]);
+  }, [search, excludeSurahs, value]);
 
   // Find currently selected surah details
   const selectedSurah = useMemo(() => {
@@ -58,7 +73,10 @@ export default function SurahPicker({ value, onChange }: SurahPickerProps) {
       {/* Trigger Button */}
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!isOpen) setSearch('');
+          setIsOpen(!isOpen);
+        }}
         className="w-full flex items-center justify-between border border-border bg-background px-3.5 py-2.5 rounded-[2px] text-foreground focus:outline-none focus:border-primary text-left cursor-pointer min-h-[44px]"
       >
         {selectedSurah ? (
@@ -125,7 +143,7 @@ export default function SurahPicker({ value, onChange }: SurahPickerProps) {
               })
             ) : (
               <li className="px-3.5 py-4 text-center text-xs text-muted-foreground">
-                no surahs match your search
+                {search.trim() ? 'no surahs match your search' : 'no other surahs available'}
               </li>
             )}
           </ul>
